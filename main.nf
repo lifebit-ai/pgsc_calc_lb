@@ -11,14 +11,6 @@ nextflow.enable.dsl = 2
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    VALIDATE & PRINT PARAMETER SUMMARY
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-include { paramsHelp; paramsSummaryLog; paramsSummaryMap } from 'plugin/nf-schema'
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOW FOR PIPELINE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -45,11 +37,7 @@ workflow PGSCATALOG_PGSCCALC {
 workflow {
     main:
     if (params.help) {
-        if (params.help.toString() == 'true') {
-            log.info "Typical pipeline command:\n\n  nextflow run pgscatalog/pgsc_calc --input input_file.csv\n"
-        } else {
-            log.info paramsHelp([:], "nextflow run pgscatalog/pgsc_calc --input input_file.csv")
-        }
+        log.info "Typical pipeline command:\n\n  nextflow run pgscatalog/pgsc_calc --input input_file.csv\n"
         log.info "See https://pgsc-calc.readthedocs.io/en/latest/getting-started.html for more help"
         exit 0
     }
@@ -60,7 +48,7 @@ workflow {
     citation = '\n' + WorkflowMain.citation(workflow) + '\n'
 
     // Print parameter summary log to screen
-    log.info logo + paramsSummaryLog(workflow) + citation
+    log.info logo + WorkflowMain.paramsSummaryLog(params) + citation
 
     WorkflowPgscCalc.initialise(params, log)
 
@@ -72,7 +60,7 @@ workflow {
     project_dir_meta = projectDir
 
     workflow.onComplete {
-        def summary_params = paramsSummaryMap(workflow_meta)
+        def summary_params = WorkflowMain.paramsSummaryMap(params_meta)
         if (params_meta.email || params_meta.email_on_fail) {
             NfcoreTemplate.email(workflow_meta, params_meta, summary_params, project_dir_meta, log_meta)
         }

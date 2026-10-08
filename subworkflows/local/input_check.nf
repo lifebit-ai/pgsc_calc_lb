@@ -40,11 +40,13 @@ workflow INPUT_CHECK {
                 .map { row -> parser.parseCSVRow(row)}
                 .set { parsed_input }
     } else if (format.equals("json")) {
+        // countJson() / splitJson() need Nextflow >= 23.x, so parse with JsonSlurper
+        def json_rows
         def n_chrom
-        n_chrom = file(input_path).countJson()
+        json_rows = new groovy.json.JsonSlurper().parseText(file(input_path).text)
+        n_chrom = json_rows.size()
         parser = new SamplesheetParser(file(input_path), n_chrom, params.target_build)
-        input.splitJson()
-            .collect()
+        input.map { json_rows }
             .map { jsonarray -> parser.verifySamplesheet(jsonarray)}
             .flatten()
             .map { json -> parser.parseJSON(json)}
@@ -82,7 +84,9 @@ workflow INPUT_CHECK {
     ch_bfiles.bim.mix(ch_pfiles.pvar).dump(tag: 'variants').set { variants }
     ch_bfiles.fam.mix(ch_pfiles.psam).dump(tag: 'pheno').set { pheno }
     ch_branched.vcf.dump(tag: 'input').set{vcf}
-    FORMAT_SCOREFILES.out.scorefiles.dump(tag: 'input').set{ scorefiles }
+    FORMAT_SCOREFILES.out.scorefiles
+        .map { it instanceof List ? it : [it] } // always a list (was arity "1..*")
+        .dump(tag: 'input').set{ scorefiles }
     FORMAT_SCOREFILES.out.log_scorefiles.dump(tag: 'input').set{ log_scorefiles }
 
     emit:
