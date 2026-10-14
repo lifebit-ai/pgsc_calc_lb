@@ -87,6 +87,8 @@ workflow REPORT {
         file(projectDir / "assets" /"report" / "PGS_Logo.png", checkIfExists: true),
         file(projectDir / "assets" /"report" / "pgs_header_background.png", checkIfExists: true)])
       .collect()
+      // exactly 4 files expected: report, css, background image x2 (was arity '4')
+      .map { if (it.size() != 4) error("Expected 4 report files, got ${it.size()}"); it }
       .set{ report_path }
 
     SCORE_REPORT( ch_report_input, intersect_count, reference_panel_name, report_path )

@@ -16,7 +16,7 @@ process SCORE_REPORT {
     tuple val(meta), path(scorefile), path(score_log), path(match_summary), path(ancestry)
     path intersect_count
     val reference_panel_name
-    path(report_path, arity: '4') // 4 files expected: report, css, background image x2
+    path report_path // 4 files expected: report, css, background image x2
 
     output:
     // includeInputs to correctly use $meta.id in publishDir path

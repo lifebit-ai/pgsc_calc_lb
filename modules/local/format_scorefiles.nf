@@ -15,9 +15,9 @@ process FORMAT_SCOREFILES {
     path reference
 
     output:
-    path "formatted/normalised_*.{txt,txt.gz}", arity: "1..*", emit: scorefiles
-    path "formatted/log_scorefiles.json", arity: "1", emit: log_scorefiles
-    path "versions.yml", arity: "1", emit: versions
+    path "formatted/normalised_*.{txt,txt.gz}", emit: scorefiles
+    path "formatted/log_scorefiles.json", emit: log_scorefiles
+    path "versions.yml", emit: versions
 
     script:
     def args = task.ext.args ?: ''

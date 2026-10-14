@@ -22,6 +22,22 @@ class WorkflowMain {
 
 
     //
+    // Non-null parameters grouped for NfcoreTemplate.email / IM_notification
+    // (replaces nf-schema paramsSummaryMap)
+    //
+    public static Map paramsSummaryMap(params) {
+        return ['Parameters': params.findAll { it.value != null }]
+    }
+
+    //
+    // Plain-text summary of non-null parameters (replaces nf-schema paramsSummaryLog)
+    //
+    public static String paramsSummaryLog(params) {
+        def lines = paramsSummaryMap(params)['Parameters'].collect { k, v -> "  ${k}: ${v}" }
+        return "\nParameters:\n" + lines.join("\n") + "\n"
+    }
+
+    //
     // Validate parameters and print summary to screen
     //
     public static void initialise(workflow, params, log, args) {
