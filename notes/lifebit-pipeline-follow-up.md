@@ -32,7 +32,53 @@ identifiers have been omitted.
 
 ## Priority Technical Questions
 
-### 1. Supported container images and registries
+### 1. Large-file management: linked, copied, mounted, and staged data
+
+This is the main question before running genomic workflows with large pfile,
+VCF, reference, and score inputs.
+
+The current documentation describes several distinct mechanisms:
+
+- File Explorer can hold a virtual or federated link to cloud data without
+  copying the underlying object.
+- In an Azure interactive session, linked data is streamed through BlobFuse,
+  appears under `filesystems`, and does not consume session disk allocation.
+- Selecting **Copy items to the session instead of linking** creates a read-only
+  copy under `mounted-data-readonly` and consumes the session's Mounted Data
+  volume.
+- In our Nextflow test, the file selector generated a platform HTTPS input URL,
+  and a process `path` input caused the file to be localized into an Azure Batch
+  task work directory.
+
+Could Lifebit provide an Azure-specific data-flow diagram and clarify:
+
+- The precise platform definitions of linked, mounted, copied, localized, and
+  staged data.
+- Whether a file selected for a Nextflow job is streamed, copied to Azure Blob
+  work storage, downloaded to worker-local disk, or moved through multiple
+  stages.
+- Whether each process using the same large file creates another physical copy
+  or reuses a shared object, cache, BlobFuse mount, or node-local copy.
+- Whether Azure Batch supports a direct BlobFuse-style input mode, and when it
+  is appropriate compared with a Nextflow `path` input.
+- The recommended approach for large PLINK pfile triplets, VCFs and indexes,
+  ancestry references, and score files that require local random access.
+- How relative sibling files are preserved when selecting a folder or a
+  samplesheet whose rows reference `.pgen`, `.pvar`, and `.psam` files.
+- Storage, network-transfer, startup-time, and egress-cost implications of each
+  approach.
+- Which quotas apply: interactive-session disk, Azure Batch worker disk, work
+  storage, file count, and the documented 100 linked-item session limit.
+- Data lifetime and cleanup behavior after successful, failed, non-resumable,
+  resumed, and deleted analyses.
+- Whether checksums, immutable object versions, and provenance are retained or
+  exposed at each stage.
+
+It would be helpful to have a recommended pattern for multi-hundred-GB or TB
+genomic inputs that avoids unnecessary copies while remaining compatible with
+tools such as PLINK2.
+
+### 2. Supported container images and registries
 
 The shorthand image `ubuntu:22.04` was rejected by Azure Batch with:
 
@@ -55,7 +101,7 @@ Could Lifebit clarify:
 - Can Lifebit provide the underlying Azure validation details for the rejected
   Ubuntu image, including the image reference Azure received?
 
-### 2. Custom output-directory parameter is not honored
+### 3. Custom output-directory parameter is not honored
 
 The workflow form showed a custom parameter named `outdir` with the value
 `results_jt03`. The generated CloudOS CLI preview represented this as
@@ -76,7 +122,7 @@ Could Lifebit clarify:
 This also affects result mounting because repeated analyses publish folders
 with the same name.
 
-### 3. Embedded execution report is blocked
+### 4. Embedded execution report is blocked
 
 The workflow generated its Nextflow execution report, but the analysis
 **Report** tab displayed:
@@ -94,7 +140,7 @@ Could Lifebit confirm:
   configuration issue.
 - The supported way to view generated Nextflow reports inside the TRE.
 
-### 4. Nextflow runtime and upgrade policy
+### 5. Nextflow runtime and upgrade policy
 
 The observed runtime is `22.11.1-edge`, built in November 2022. The upstream
 `pgsc_calc` release originally required newer Nextflow features, and this fork
@@ -108,7 +154,7 @@ Could Lifebit confirm:
 - Whether Lifebit has validated a newer stable Nextflow release with Azure
   Batch.
 
-### 5. Main-script selection and manifest precedence
+### 6. Main-script selection and manifest precedence
 
 An imported workflow was configured in the UI with `hello.nf` as its main file,
 but Nextflow launched `main.nf` because the repository manifest declared:
@@ -123,7 +169,7 @@ Could Lifebit document the expected precedence between the UI **Main file**
 field and `manifest.mainScript`? If the repository manifest is authoritative,
 the import screen could detect and warn about conflicting values.
 
-### 6. Schema discovery differs between import and run screens
+### 7. Schema discovery differs between import and run screens
 
 During tool creation, the schema selector reported:
 
@@ -144,20 +190,6 @@ report displayed the correct commit hash, but another report field showed
 `revision null`.
 
 Could this field be populated consistently to avoid ambiguity in run records?
-
-### Execution trace access
-
-The generated command enabled a Nextflow trace file, but it was not present in
-the mounted published results.
-
-Where can users retrieve the trace referenced by the launch command?
-
-### Lenient caching
-
-The platform adds `-process.cache lenient` and `-resume` automatically.
-
-Could Lifebit explain why lenient caching is the default and document its
-reproducibility implications for resumed genomic analyses?
 
 ### Azure-specific workflow documentation
 
@@ -220,9 +252,10 @@ Aligning the two paths would remove an unnecessary workaround.
 
 The most immediate needs before running the full `pgsc_calc` example are:
 
-1. Confirm the supported container registries and image requirements.
-2. Clarify how custom output-directory parameters are mapped or overridden.
-3. Confirm the supported method for viewing execution reports and retrieving
-   traces.
-4. Confirm the supported Nextflow version and Azure-specific operational
+1. Clarify the recommended Azure data-management pattern for large genomic
+   inputs, including linking, copying, task staging, cleanup, and costs.
+2. Confirm the supported container registries and image requirements.
+3. Clarify how custom output-directory parameters are mapped or overridden.
+4. Confirm the supported method for viewing execution reports.
+5. Confirm the supported Nextflow version and Azure-specific operational
    guidance.
