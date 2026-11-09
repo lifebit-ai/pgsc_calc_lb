@@ -5,7 +5,7 @@ nextflow.enable.dsl = 2
 params.outdir = params.outdir ?: 'results'
 
 process HELLO {
-    container 'ubuntu:22.04'
+    container 'ghcr.io/pgscatalog/pyyaml:6.0'
 
     publishDir params.outdir, mode: 'copy'
 
