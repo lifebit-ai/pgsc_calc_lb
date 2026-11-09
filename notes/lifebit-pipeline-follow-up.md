@@ -122,6 +122,8 @@ Could Lifebit clarify:
 This also affects result mounting because repeated analyses publish folders
 with the same name.
 
+## Secondary Technical Questions
+
 ### 4. Embedded execution report is blocked
 
 The workflow generated its Nextflow execution report, but the analysis
@@ -256,6 +258,4 @@ The most immediate needs before running the full `pgsc_calc` example are:
    inputs, including linking, copying, task staging, cleanup, and costs.
 2. Confirm the supported container registries and image requirements.
 3. Clarify how custom output-directory parameters are mapped or overridden.
-4. Confirm the supported method for viewing execution reports.
-5. Confirm the supported Nextflow version and Azure-specific operational
-   guidance.
+
