@@ -1,5 +1,9 @@
 # Lifebit Pipeline Follow-up
 
+> **Status:** Lifebit responded to priority questions 1-3 on 16 November 2026.
+> See `lifebit-response-2026-11-16.md` for the sanitized response digest and
+> resulting actions. The original questions below are retained for context.
+
 ## Purpose
 
 We have been testing a Nextflow repository incrementally on the DoH Lifebit
@@ -79,6 +83,13 @@ genomic inputs that avoids unnecessary copies while remaining compatible with
 tools such as PLINK2.
 
 ### 2. Supported container images and registries
+
+**Status update:** Lifebit confirmed support for public registries subject to
+the M42/DoH firewall. Interactive-session Podman tests subsequently pulled and
+ran public images from GHCR, Docker Hub, and Quay. Docker Hub shorthand also
+resolved successfully. The remaining issue is specific to the earlier Azure
+Batch/Nextflow rejection of `ubuntu:22.04`, not general interactive registry
+access.
 
 The shorthand image `ubuntu:22.04` was rejected by Azure Batch with:
 
@@ -258,4 +269,3 @@ The most immediate needs before running the full `pgsc_calc` example are:
    inputs, including linking, copying, task staging, cleanup, and costs.
 2. Confirm the supported container registries and image requirements.
 3. Clarify how custom output-directory parameters are mapped or overridden.
-
