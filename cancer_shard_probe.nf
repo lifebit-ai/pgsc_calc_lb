@@ -8,6 +8,7 @@ params.input_vcf_chr20 = null
 params.input_index_chr20 = null
 params.input_vcf_chr22 = null
 params.input_index_chr22 = null
+params.hold_seconds = 1200
 params.outdir = params.outdir ?: 'results'
 
 process CANCER_SHARD_PROBE {
@@ -15,7 +16,7 @@ process CANCER_SHARD_PROBE {
 
     container 'ghcr.io/pgscatalog/pyyaml:6.0'
 
-    cpus 1
+    cpus 4
     memory 4.GB
     time 4.h
     maxForks 3
@@ -33,6 +34,7 @@ process CANCER_SHARD_PROBE {
     cancer_shard_probe.py \
         --label '${shard_label}' \
         --expected-contig '${expected_contig}' \
+        --hold-seconds '${params.hold_seconds}' \
         --vcf input.vcf.gz \
         --index input.vcf.gz.tbi \
         --output '${shard_label}.localization-receipt.tsv'
@@ -51,6 +53,12 @@ workflow {
     missing_params = required_params.findAll { !it.value }.collect { "--${it.key}" }
     if (missing_params) {
         error "Please provide required Azure inputs: ${missing_params.join(', ')}"
+    }
+    if (!(params.hold_seconds.toString() ==~ /^[0-9]+$/)) {
+        error "--hold_seconds must be a non-negative integer"
+    }
+    if ((params.hold_seconds as int) > 1800) {
+        error "--hold_seconds must not exceed 1800"
     }
 
     input_ch = Channel.of(

@@ -24,7 +24,9 @@ class CancerShardProbeTest(unittest.TestCase):
             handle.write(b"TBI\x01synthetic-index\n")
         return vcf, index
 
-    def run_probe(self, label, vcf, index, output, expected_contig="chr20"):
+    def run_probe(
+        self, label, vcf, index, output, expected_contig="chr20", hold_seconds=0
+    ):
         return subprocess.run(
             [
                 sys.executable,
@@ -33,6 +35,8 @@ class CancerShardProbeTest(unittest.TestCase):
                 label,
                 "--expected-contig",
                 expected_contig,
+                "--hold-seconds",
+                str(hold_seconds),
                 "--vcf",
                 str(vcf),
                 "--index",
@@ -62,6 +66,7 @@ class CancerShardProbeTest(unittest.TestCase):
                 b"chr20\t10\tA\tG\nchr20\t20\tC\tT\n"
             ).hexdigest()
             self.assertEqual(rows["variant_count"], "2")
+            self.assertEqual(rows["hold_seconds"], "0")
             self.assertEqual(rows["variant_key_sha256"], expected_digest)
             self.assertEqual(rows["index_sha256"], hashlib.sha256(index.read_bytes()).hexdigest())
             receipt = output.read_text(encoding="utf-8")
@@ -70,6 +75,7 @@ class CancerShardProbeTest(unittest.TestCase):
                 {
                     "label",
                     "expected_contig",
+                    "hold_seconds",
                     "process",
                     "started_utc",
                     "completed_utc",
@@ -162,6 +168,18 @@ class CancerShardProbeTest(unittest.TestCase):
 
             self.assertEqual(result.returncode, 1)
             self.assertIn("expected chr22, observed chr20", result.stderr)
+
+    def test_rejects_hold_above_limit(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            vcf, index = self.make_inputs(root)
+
+            result = self.run_probe(
+                "chr20", vcf, index, root / "receipt.tsv", hold_seconds=1801
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("Hold seconds must not exceed 1800", result.stderr)
 
 
 if __name__ == "__main__":

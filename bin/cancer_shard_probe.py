@@ -9,12 +9,14 @@ import re
 import socket
 import stat
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 
 LABEL_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
 AZURE_ENV_KEYS = ("AZ_BATCH_POOL_ID", "AZ_BATCH_NODE_ID", "AZ_BATCH_TASK_ID")
+MAX_HOLD_SECONDS = 1800
 
 
 def sha256_file(path):
@@ -115,6 +117,7 @@ def parse_args(argv=None):
     )
     parser.add_argument("--label", required=True)
     parser.add_argument("--expected-contig", required=True)
+    parser.add_argument("--hold-seconds", type=int, default=0)
     parser.add_argument("--vcf", required=True, type=Path)
     parser.add_argument("--index", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
@@ -129,6 +132,10 @@ def main(argv=None):
         raise ValueError("Label may contain only letters, numbers, dot, underscore, and hyphen")
     if not LABEL_PATTERN.fullmatch(args.expected_contig):
         raise ValueError("Expected contig may contain only letters, numbers, dot, underscore, and hyphen")
+    if args.hold_seconds < 0:
+        raise ValueError("Hold seconds must be non-negative")
+    if args.hold_seconds > MAX_HOLD_SECONDS:
+        raise ValueError(f"Hold seconds must not exceed {MAX_HOLD_SECONDS}")
     if not args.vcf.name.endswith(".vcf.gz"):
         raise ValueError("VCF input must end with .vcf.gz")
     if args.index.name != args.vcf.name + ".tbi":
@@ -141,6 +148,8 @@ def main(argv=None):
     vcf_stat = args.vcf.stat()
     index_stat = args.index.stat()
     filesystem_type, mount_target = mount_details(args.vcf)
+    if args.hold_seconds:
+        time.sleep(args.hold_seconds)
     variant_count, variant_key_sha256 = inspect_vcf(args.vcf, args.expected_contig)
     validate_tbi(args.index)
     completed = datetime.now(timezone.utc)
@@ -148,6 +157,7 @@ def main(argv=None):
     rows = [
         ("label", args.label),
         ("expected_contig", args.expected_contig),
+        ("hold_seconds", args.hold_seconds),
         ("process", "CANCER_SHARD_PROBE"),
         ("started_utc", started.isoformat()),
         ("completed_utc", completed.isoformat()),
