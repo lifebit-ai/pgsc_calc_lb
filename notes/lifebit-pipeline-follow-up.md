@@ -87,9 +87,14 @@ tools such as PLINK2.
 **Status update:** Lifebit confirmed support for public registries subject to
 the M42/DoH firewall. Interactive-session Podman tests subsequently pulled and
 ran public images from GHCR, Docker Hub, and Quay. Docker Hub shorthand also
-resolved successfully. The remaining issue is specific to the earlier Azure
-Batch/Nextflow rejection of `ubuntu:22.04`, not general interactive registry
-access.
+resolved successfully. A subsequent Azure Batch workflow using the fully
+qualified `docker.io/library/ubuntu:22.04` completed successfully. The original
+failure is therefore resolved: this deployment's Nextflow/Azure Batch path
+requires a fully qualified image reference, while unqualified
+`ubuntu:22.04` was rejected. Inspection of the exact Nextflow `v22.11.1-edge`
+source confirms that `nf-azure` passes the configured process container string
+unchanged to Azure Batch `TaskContainerSettings.withImageName()`; it does not
+prepend the configured registry server or apply Podman short-name aliases.
 
 The shorthand image `ubuntu:22.04` was rejected by Azure Batch with:
 
@@ -111,6 +116,12 @@ Could Lifebit clarify:
 - What CPU architecture and image requirements apply to the worker pool?
 - Can Lifebit provide the underlying Azure validation details for the rejected
   Ubuntu image, including the image reference Azure received?
+
+No registry allowlist follow-up is currently required. A documentation note
+that Azure Batch images must be fully qualified would prevent recurrence. This
+finding does not establish that Batch workers lack a `shortnames.conf` file;
+the relevant confirmed mechanism is that `nf-azure` does not read or apply the
+interactive session's Podman alias configuration.
 
 ### 3. Custom output-directory parameter is not honored
 

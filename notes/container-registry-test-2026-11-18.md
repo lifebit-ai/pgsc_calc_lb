@@ -121,6 +121,7 @@ search-policy issue, not a firewall failure.
 | Docker Hub/Ubuntu | No | Success; signatures, one blob, config and manifest copied | amd64; 80,869,588 bytes; reported digest begins `sha256:8abcafcf` | Success: Ubuntu 22.04.5 LTS and `DOCKERHUB_RUN_OK` | 3.092 s | Harmless rootless IPv6 sysctl warning during run |
 | Quay/Lifebit samtools | No | Success | `sha256:272999639cdf356e8427e1cd6c4f1dc4fd20b0e8242fb859e3d8758b3b03d38`; amd64; 568,398,789 bytes | Success: samtools 1.10 / htslib 1.10.2 | Not captured | Non-fatal IPv6 sysctl warning and parse message |
 | Docker Hub short name | Qualified image already cached | Success | Resolved to Docker Hub image | Not rerun | Not recorded | None |
+| Docker Hub Alpine short name | Not recorded | Success; layer, config and manifest copied | Podman explicitly resolved alias to `docker.io/library/alpine:3.20`; pull returned image ID beginning `bf8527eb` | Run pending | 2.348 s | None |
 
 ### GHCR pull observation
 
@@ -153,6 +154,20 @@ Azure Batch rejection is more likely to involve Batch-specific image-reference
 validation, Batch network policy, or the old Nextflow Azure executor than an
 interactive-session Podman or general Docker Hub failure.
 
+An independent short-name pull of uncached `alpine:3.20` completed in 2.348
+seconds. Podman reported:
+
+```text
+Resolved "alpine" as an alias
+(/etc/containers/registries.conf.d/shortnames.conf)
+Trying to pull docker.io/library/alpine:3.20
+```
+
+This proves short-name behavior in the interactive session comes from Podman's
+configured alias table, not a generic image-name feature shared with Azure
+Batch. Nextflow's Azure Batch executor does not apply the interactive session's
+Podman `shortnames.conf`.
+
 ### Quay observation
 
 The uncached pull of `quay.io/lifebitaiorg/samtools` succeeded. Inspection
@@ -178,6 +193,57 @@ The local image store now contains approximately 81 MB of Ubuntu, 143 MB of
 PGSCatalog pyyaml, and 568 MB of Lifebit samtools images, approximately 792 MB
 as displayed by Podman. This test does not prove that Azure Batch workers use
 the same network route or image-reference validation.
+
+### Azure Batch acceptance
+
+An isolated workflow at Git revision
+`bff3ba6a280844a39b372199786ed36580758a68` used:
+
+```nextflow
+container 'docker.io/library/ubuntu:22.04'
+```
+
+The Azure Batch analysis completed successfully. The otherwise equivalent
+earlier workflow using `ubuntu:22.04` failed before command execution with
+`One or more container images specified are invalid`.
+
+This isolates the failure to unqualified image-reference handling in the DoH
+Nextflow/Azure Batch path. Docker Hub registry access, layer access, image
+architecture, and container execution all work. Use fully qualified container
+references for this deployment.
+
+### Nextflow 22.11.1-edge source confirmation
+
+Inspection of the exact upstream source for Nextflow `v22.11.1-edge` confirms
+that the Azure executor does not qualify or otherwise rewrite the process image
+name. `AzBatchTaskHandler` submits the process task to `AzBatchService`, where
+`createTask()` reads `task.getContainer()` and passes the resulting string
+directly to Azure's `TaskContainerSettings.withImageName(container)`.
+
+The corresponding upstream unit test uses `ubuntu:latest` and asserts that
+Azure's task container setting remains exactly `ubuntu:latest`. The executor's
+default registry server of `docker.io` configures pool registry credentials; it
+is not prepended to the process image name. No Podman, `shortnames.conf`, or
+`registries.conf` handling exists in the `nf-azure` source at this revision.
+
+Therefore the supported post-mortem wording is:
+
+- Interactive Podman resolved short names through its local alias
+  configuration.
+- Nextflow `22.11.1-edge` passed the configured process image name unchanged to
+  Azure Batch.
+- Azure Batch rejected the unqualified reference and accepted the fully
+  qualified reference in the observed runs.
+- There is no evidence that the Batch worker literally lacked a
+  `shortnames.conf` file; that claim is unnecessary and should not be made.
+
+Upstream source evidence:
+
+- [`AzBatchTaskHandler.groovy`](https://github.com/nextflow-io/nextflow/blob/4fc071ff773fee7c0d3d3b52e6ab92f9e4e362dd/plugins/nf-azure/src/main/nextflow/cloud/azure/batch/AzBatchTaskHandler.groovy#L78-L93)
+- [`AzBatchService.groovy`](https://github.com/nextflow-io/nextflow/blob/4fc071ff773fee7c0d3d3b52e6ab92f9e4e362dd/plugins/nf-azure/src/main/nextflow/cloud/azure/batch/AzBatchService.groovy#L368-L406)
+- [`AzBatchServiceTest.groovy`](https://github.com/nextflow-io/nextflow/blob/4fc071ff773fee7c0d3d3b52e6ab92f9e4e362dd/plugins/nf-azure/src/test/nextflow/cloud/azure/batch/AzBatchServiceTest.groovy#L460-L490)
+- [Nextflow issue 2354](https://github.com/nextflow-io/nextflow/issues/2354),
+  explaining why Nextflow cannot safely assume and prepend one default registry
 
 ## Failure Classification
 
