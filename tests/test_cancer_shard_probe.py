@@ -24,13 +24,15 @@ class CancerShardProbeTest(unittest.TestCase):
             handle.write(b"TBI\x01synthetic-index\n")
         return vcf, index
 
-    def run_probe(self, label, vcf, index, output):
+    def run_probe(self, label, vcf, index, output, expected_contig="chr20"):
         return subprocess.run(
             [
                 sys.executable,
                 str(SCRIPT),
                 "--label",
                 label,
+                "--expected-contig",
+                expected_contig,
                 "--vcf",
                 str(vcf),
                 "--index",
@@ -67,6 +69,7 @@ class CancerShardProbeTest(unittest.TestCase):
                 set(rows),
                 {
                     "label",
+                    "expected_contig",
                     "process",
                     "started_utc",
                     "completed_utc",
@@ -147,6 +150,18 @@ class CancerShardProbeTest(unittest.TestCase):
             self.assertEqual(result.returncode, 1)
             self.assertIn("Label may contain only", result.stderr)
             self.assertFalse((root / "leaked").exists())
+
+    def test_rejects_unexpected_contig(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            vcf, index = self.make_inputs(root)
+
+            result = self.run_probe(
+                "chr22", vcf, index, root / "receipt.tsv", expected_contig="chr22"
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("expected chr22, observed chr20", result.stderr)
 
 
 if __name__ == "__main__":

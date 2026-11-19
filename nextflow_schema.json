@@ -1,36 +1,59 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://raw.githubusercontent.com/lifebit-ai/pgsc_calc_lb/john_test_05/nextflow_schema.json",
-  "title": "Cancer shard localization probe",
-  "description": "Stage one ML-filtered cancer VCF/index pair in Azure Batch and publish a metadata-only receipt.",
+  "$id": "https://raw.githubusercontent.com/lifebit-ai/pgsc_calc_lb/john_test_06/nextflow_schema.json",
+  "title": "Cancer chromosome fan-out probe",
+  "description": "Stage three cancer VCF/index pairs as independent Azure Batch tasks and publish metadata-only receipts.",
   "type": "object",
   "properties": {
-    "input_vcf": {
+    "input_vcf_chr01": {
       "type": "string",
       "format": "file-path",
       "exists": true,
-      "description": "ML-filtered cancer cohort VCF selected from Lifebit File Explorer.",
-      "fa_icon": "fas fa-file-archive"
+      "description": "Chromosome 1 ML-filtered cancer cohort VCF."
     },
-    "input_index": {
+    "input_index_chr01": {
       "type": "string",
       "format": "file-path",
       "exists": true,
-      "description": "Tabix index selected from the same folder as input_vcf.",
-      "fa_icon": "fas fa-file-archive"
+      "description": "Tabix index paired with input_vcf_chr01."
     },
-    "shard_label": {
+    "input_vcf_chr20": {
       "type": "string",
-      "default": "chr20",
-      "pattern": "^[A-Za-z0-9._-]+$",
-      "description": "Non-sensitive label used to name the receipt."
+      "format": "file-path",
+      "exists": true,
+      "description": "Chromosome 20 ML-filtered cancer cohort VCF."
+    },
+    "input_index_chr20": {
+      "type": "string",
+      "format": "file-path",
+      "exists": true,
+      "description": "Tabix index paired with input_vcf_chr20."
+    },
+    "input_vcf_chr22": {
+      "type": "string",
+      "format": "file-path",
+      "exists": true,
+      "description": "Chromosome 22 ML-filtered cancer cohort VCF."
+    },
+    "input_index_chr22": {
+      "type": "string",
+      "format": "file-path",
+      "exists": true,
+      "description": "Tabix index paired with input_vcf_chr22."
     },
     "outdir": {
       "type": "string",
       "format": "directory-path",
       "default": "results",
-      "description": "Output directory for the metadata-only receipt."
+      "description": "Output directory for the three metadata-only receipts."
     }
   },
-  "required": ["input_vcf", "input_index"]
+  "required": [
+    "input_vcf_chr01",
+    "input_index_chr01",
+    "input_vcf_chr20",
+    "input_index_chr20",
+    "input_vcf_chr22",
+    "input_index_chr22"
+  ]
 }

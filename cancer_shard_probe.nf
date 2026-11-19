@@ -2,9 +2,12 @@
 
 nextflow.enable.dsl = 2
 
-params.input_vcf = null
-params.input_index = null
-params.shard_label = 'chr20'
+params.input_vcf_chr01 = null
+params.input_index_chr01 = null
+params.input_vcf_chr20 = null
+params.input_index_chr20 = null
+params.input_vcf_chr22 = null
+params.input_index_chr22 = null
 params.outdir = params.outdir ?: 'results'
 
 process CANCER_SHARD_PROBE {
@@ -15,11 +18,12 @@ process CANCER_SHARD_PROBE {
     cpus 1
     memory 4.GB
     time 4.h
+    maxForks 3
 
     publishDir "${params.outdir}/cancer-shard-probe", mode: 'copy'
 
     input:
-    tuple val(shard_label), path(vcf, stageAs: 'input.vcf.gz'), path(index, stageAs: 'input.vcf.gz.tbi')
+    tuple val(shard_label), val(expected_contig), path(vcf, stageAs: 'input.vcf.gz'), path(index, stageAs: 'input.vcf.gz.tbi')
 
     output:
     path "${shard_label}.localization-receipt.tsv", emit: receipt
@@ -28,6 +32,7 @@ process CANCER_SHARD_PROBE {
     """
     cancer_shard_probe.py \
         --label '${shard_label}' \
+        --expected-contig '${expected_contig}' \
         --vcf input.vcf.gz \
         --index input.vcf.gz.tbi \
         --output '${shard_label}.localization-receipt.tsv'
@@ -35,21 +40,39 @@ process CANCER_SHARD_PROBE {
 }
 
 workflow {
-    if (!params.input_vcf) {
-        error "Please provide --input_vcf using the Lifebit file selector"
-    }
-    if (!params.input_index) {
-        error "Please provide --input_index using the Lifebit file selector"
-    }
-    if (!(params.shard_label ==~ /^[A-Za-z0-9._-]+$/)) {
-        error "--shard_label may contain only letters, numbers, dot, underscore, and hyphen"
+    required_params = [
+        input_vcf_chr01: params.input_vcf_chr01,
+        input_index_chr01: params.input_index_chr01,
+        input_vcf_chr20: params.input_vcf_chr20,
+        input_index_chr20: params.input_index_chr20,
+        input_vcf_chr22: params.input_vcf_chr22,
+        input_index_chr22: params.input_index_chr22
+    ]
+    missing_params = required_params.findAll { !it.value }.collect { "--${it.key}" }
+    if (missing_params) {
+        error "Please provide required Azure inputs: ${missing_params.join(', ')}"
     }
 
-    input_ch = Channel.of(tuple(
-        params.shard_label,
-        file(params.input_vcf, checkIfExists: true),
-        file(params.input_index, checkIfExists: true)
-    ))
+    input_ch = Channel.of(
+        tuple(
+            'chr01',
+            'chr1',
+            file(params.input_vcf_chr01, checkIfExists: true),
+            file(params.input_index_chr01, checkIfExists: true)
+        ),
+        tuple(
+            'chr20',
+            'chr20',
+            file(params.input_vcf_chr20, checkIfExists: true),
+            file(params.input_index_chr20, checkIfExists: true)
+        ),
+        tuple(
+            'chr22',
+            'chr22',
+            file(params.input_vcf_chr22, checkIfExists: true),
+            file(params.input_index_chr22, checkIfExists: true)
+        )
+    )
 
     CANCER_SHARD_PROBE(input_ch)
 }

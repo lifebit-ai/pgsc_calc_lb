@@ -47,7 +47,7 @@ def mount_details(path):
     return best_type, best_mount or "unavailable"
 
 
-def inspect_vcf(path):
+def inspect_vcf(path, expected_contig):
     digest = hashlib.sha256()
     variant_count = 0
     found_fileformat = False
@@ -73,6 +73,12 @@ def inspect_vcf(path):
                 raise ValueError(f"Invalid VCF position at line {line_number}") from error
             if position < 1:
                 raise ValueError(f"Invalid VCF position at line {line_number}")
+            if fields[0] != expected_contig.encode("ascii"):
+                observed = fields[0].decode("ascii", errors="replace")
+                raise ValueError(
+                    f"Unexpected VCF contig at line {line_number}: "
+                    f"expected {expected_contig}, observed {observed}"
+                )
             digest.update(b"\t".join((fields[0], fields[1], fields[3], fields[4])))
             digest.update(b"\n")
             variant_count += 1
@@ -108,6 +114,7 @@ def parse_args(argv=None):
         description="Create a metadata-only receipt for a staged cancer VCF shard"
     )
     parser.add_argument("--label", required=True)
+    parser.add_argument("--expected-contig", required=True)
     parser.add_argument("--vcf", required=True, type=Path)
     parser.add_argument("--index", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
@@ -120,6 +127,8 @@ def main(argv=None):
 
     if not LABEL_PATTERN.fullmatch(args.label):
         raise ValueError("Label may contain only letters, numbers, dot, underscore, and hyphen")
+    if not LABEL_PATTERN.fullmatch(args.expected_contig):
+        raise ValueError("Expected contig may contain only letters, numbers, dot, underscore, and hyphen")
     if not args.vcf.name.endswith(".vcf.gz"):
         raise ValueError("VCF input must end with .vcf.gz")
     if args.index.name != args.vcf.name + ".tbi":
@@ -132,12 +141,13 @@ def main(argv=None):
     vcf_stat = args.vcf.stat()
     index_stat = args.index.stat()
     filesystem_type, mount_target = mount_details(args.vcf)
-    variant_count, variant_key_sha256 = inspect_vcf(args.vcf)
+    variant_count, variant_key_sha256 = inspect_vcf(args.vcf, args.expected_contig)
     validate_tbi(args.index)
     completed = datetime.now(timezone.utc)
 
     rows = [
         ("label", args.label),
+        ("expected_contig", args.expected_contig),
         ("process", "CANCER_SHARD_PROBE"),
         ("started_utc", started.isoformat()),
         ("completed_utc", completed.isoformat()),
