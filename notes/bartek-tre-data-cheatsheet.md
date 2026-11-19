@@ -1,6 +1,6 @@
 # IHLAD TRE Data Cheatsheet for Bartek
 
-Last updated: 2026-11-18
+Last updated: 2026-11-19
 
 ## Scope
 
@@ -29,6 +29,7 @@ Blob URLs, or opaque platform identifiers outside the TRE.
 | GAP genome metadata | `GAP_genome_metadata.csv` | Genome-delivery metadata | Inventory metadata only until schema/provenance are reviewed |
 | HIE/genome mapping | `hie_genome_mapping.csv` | Protected clinical/genomic linkage artifact | Do not preview, copy, sample, or export without confirmed authorization |
 | Migrated PRS package | `export-to-lifebit/` | Reference data, scores, phenotypes, provenance, and migrated code | Safe to browse by name; validate manifests before reuse |
+| Phase 1 cancer genomes | `chr01/`, `chr20/` currently visible as separate links | Chromosome-partitioned DRAGEN multi-sample VCF delivery for the historical 3,437-sample cancer cohort | Use linked access for metadata only; Batch-stage one explicit VCF/index pair at a time |
 | GAP 20K genome delivery | `ilm_20000/version-2/` | Sharded DRAGEN multi-sample VCF delivery | Very large; never analyze directly on BlobFuse |
 
 ## Platform-Visible Clinical Data
@@ -76,6 +77,76 @@ visit_occurrence_25k.csv
 2k_pgp_person_map_25k.csv
 3-5_pgp_person_map_25k.csv
 ```
+
+## Phase 1 Cancer PRS Genome Delivery
+
+Logical cloud layout:
+
+```text
+joint_genotyping/ilm_3400/version-2/chrN/
+```
+
+Confirmed interactive link:
+
+```text
+~/session_data/filesystems/chr20/
+```
+
+The current Azure delivery uses one chromosome directory, not the historical
+old-TRE `chr20/chr20` mount layout and not the GAP `shard-NNN` layout. The linked
+`chr20/` directly contains:
+
+```text
+cohort.list
+dragen-replay.json
+dragen-console.log
+dragen.metrics.json
+dragen.ml-filtered.vcf.gz
+dragen.ml-filtered.vcf.gz.tbi
+dragen.time_metrics.csv
+dragen.vcf.gz
+dragen.vcf.gz.tbi
+dragen_run_*.log
+```
+
+`chr01/` is also visible as a top-level linked entry, but its contents were not
+inspected during this check. The expected Phase 1 contract remains 22 autosomal
+ML-filtered VCF/index pairs for 3,437 samples, historically approximately
+26.70 GiB of ML-filtered VCF data. Those cohort and total-size values have not
+yet been revalidated against the current Azure delivery.
+
+Access patterns:
+
+- Interactive: link a chromosome prefix using the runtime-only account-short
+  form `az://<account>/<container>/<blob-key>`. It appears as a read-only
+  BlobFuse mount under `filesystems/<linked-name>/`. Use only `ls`, `stat`, and
+  other bounded metadata checks there.
+- Azure Batch: pass the VCF and matching `.tbi` as separate parameters using
+  that same account-short form. The parameter value is the URI only, without a
+  repeated `input_vcf=` or `input_index=` prefix. Each Nextflow `path` input is
+  physically copied to task-local worker storage before execution.
+- Select `dragen.ml-filtered.vcf.gz` for the observed-overlap PRS path; do not
+  accidentally select the much larger unfiltered `dragen.vcf.gz`.
+- Keep concrete storage-account names, complete Blob URLs, signed URLs, and task
+  identifiers inside the TRE.
+
+The first chromosome 20 Batch localization/streaming probe completed and its
+receipt passed technical acceptance:
+
+- VCF and index were regular files on XFS under the Azure Batch task mount, not
+  BlobFuse paths or symlinks.
+- VCF size was 855,571,031 bytes and index size was 62,139 bytes.
+- The full VCF stream contained 3,296,226 variant records.
+- All three values exactly match the historical accepted chromosome 20 record.
+- Streaming and validation took 152.403 seconds in the process container.
+- Azure pool, node, and task IDs were populated; their values remain inside the
+  TRE.
+- The index and variant-key digests were valid SHA-256 values; exact transcribed
+  hashes are not retained in Git.
+
+This accepts the single-pair localization and transform plumbing. It does not
+establish all-22-chromosome completeness, reference/provenance acceptance,
+target completeness, or scientific validity.
 
 ## GAP 20K Genome Delivery
 
@@ -255,6 +326,8 @@ GRCh38_HGDP+1kGP.king.cutoff.out.id
   companions), authorization, schema, snapshot, and provenance remain
   unconfirmed
 - Accepted/generated per-chromosome pfiles for the current Lifebit run
+- Complete current-Azure inventory and metadata reconciliation for all 22 cancer
+  chromosome pairs
 - Current `pgsc_calc` samplesheet using Azure paths
 - Accepted PRS and ancestry outputs
 - Exact Git revisions corresponding to migrated code trees
@@ -303,11 +376,25 @@ separate local copy of each declared `path` input. Design tasks to minimize
 repeated copies, select only necessary shards, and size worker disk for inputs,
 intermediates, and concurrent tasks.
 
+### Analysis result mounts collide by name
+
+On this Azure deployment, mounting an analysis result into an interactive
+session creates a fixed top-level folder named `results`, regardless of the
+analysis name. A second result mount fails if that session already has a
+`results` mount. The pipeline's `outdir` controls folders beneath the analysis
+Results tab; it does not change this interactive-session mount name.
+
+Current workarounds:
+
+- Start a new interactive session for the next analysis result.
+- Link the result through File Explorer rather than mounting it directly.
+- Link the uniquely named parent job folder when that option is available.
+
 ## Before Bartek Runs Anything
 
 Confirm:
 
-1. Bartek can see `ILM3400` and the same four linked data products.
+1. Bartek can see `ILM3400` and the required linked data products.
 2. The intended source is linked, copied, or Batch-staged.
 3. There is enough writable local or worker disk.
 4. The exact code revision and container are pinned.

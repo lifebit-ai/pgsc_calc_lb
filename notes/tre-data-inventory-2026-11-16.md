@@ -162,11 +162,67 @@ despite appearing beneath that path in the session interface.
 Immediate linked entries:
 
 ```text
+ClinicalOMOP/
+ClinicalPGPMap/
 GAP_genome_metadata.csv
+chr01/
+chr20/
 export-to-lifebit/
 hie_genome_mapping.csv
 ilm_20000/
 ```
+
+### Phase 1 cancer-cohort Azure delivery
+
+The separately delivered cancer-cohort joint-genotyping data are now located at
+the logical cloud prefix:
+
+```text
+joint_genotyping/ilm_3400/version-2/chrN/
+```
+
+The concrete storage account, container, complete Blob URL, and signed runtime
+values are intentionally excluded from Git. An account-short Azure prefix was
+linked into the interactive session and appeared as:
+
+```text
+~/session_data/filesystems/chr20/
+```
+
+An immediate-name listing showed that `chr20/` directly contains the ML-filtered
+VCF/index pair, unfiltered VCF/index pair, `cohort.list`, replay/metrics files,
+and DRAGEN logs. There is no second nested `chr20/`. This corrects the earlier
+inference from the old-TRE `/dataset/4000/chr20/chr20` mount layout. `chr01/` is
+also visible as a separate top-level linked entry, but its contents were not
+inspected in this observation.
+
+Confirmed current layout pattern:
+
+```text
+version-2/chr20/dragen.ml-filtered.vcf.gz
+version-2/chr20/dragen.ml-filtered.vcf.gz.tbi
+```
+
+Access behavior:
+
+- Interactive linking accepts a runtime-only account-short
+  `az://<account>/<container>/<blob-key>` prefix and exposes a read-only BlobFuse
+  mount under `filesystems`.
+- Manually configured Batch parameter rows require URI-only values; repeating
+  `input_vcf=` or `input_index=` inside an existing value causes URI parsing to
+  fail before path resolution.
+- Azure Batch/Nextflow accepts the same account-short source form and performs
+  existence checks on the main instance before worker submission.
+- Once submitted, each declared `path` input is physically localized to worker
+  storage; it is not streamed from the interactive BlobFuse link.
+
+No VCF contents, headers, sample IDs, or variant records were read during the
+interactive location check. The subsequent Batch receipt reconciled the current
+chromosome 20 ML-filtered pair to historical evidence: VCF size 855,571,031
+bytes, index size 62,139 bytes, and 3,296,226 variant records all matched
+exactly. The historical 3,437-sample count, 22-autosome completeness, and
+approximately 26.70 GiB aggregate ML-filtered size remain to be revalidated
+against the complete current Azure delivery.
 
 `ilm_20000/` is a newly observed candidate for the 20K genomic delivery. Its
 immediate child is `version-2/`. Source, ownership, size, build, shard
@@ -370,14 +426,14 @@ restore local GATK/GenomicsDB joint calling.
 
 | Field | Expected contract | TRE observation |
 | --- | --- | --- |
-| Status | Separate delivery is not confirmed by the migrated support-package evidence | TODO |
-| Files | 22 autosomal `dragen.ml-filtered.vcf.gz` shards plus `.tbi` | TODO |
-| Directory forms | `chr01`-`chr22` or `chr1`-`chr22` | TODO |
-| Build | GRCh38 | TODO |
-| Cohort | 3,437 unique IIDs | TODO |
-| Historical total size | Approximately 26.70 GiB | TODO current size |
-| Semantics | Observed variant overlap only; not target-complete | TODO confirm |
-| Dosage | Hard-call `GT`; prior inspection found no `DS`/`GP` | TODO confirm |
+| Status | Separate chromosome-partitioned delivery, outside the migrated support package | Located; chromosome 20 localization/streaming gate accepted; full-delivery acceptance pending |
+| Files | 22 autosomal `dragen.ml-filtered.vcf.gz` shards plus `.tbi` | Chromosome 20 ML-filtered and raw VCF/index pairs found by immediate-name listing; all 22 not yet enumerated |
+| Directory forms | One folder per chromosome, `chr01`-`chr22` or `chr1`-`chr22` | Current Azure observation confirms single-level `version-2/chr20/<files>`; no duplicated `chr20/chr20` |
+| Build | GRCh38 | Expected from historical contract; current immutable reference identity not revalidated |
+| Cohort | 3,437 unique IIDs | Historical count only; no current header inspection performed |
+| Historical total size | Approximately 26.70 GiB | Current aggregate size pending; current chr20 VCF/index sizes and variant count exactly match historical evidence |
+| Semantics | Observed variant overlap only; not target-complete | Historical interpretation retained; current delivery semantics pending provenance review |
+| Dosage | Hard-call `GT`; prior inspection found no `DS`/`GP` | Historical observation retained; not rechecked against current files |
 
 Absent sites in these variant-centric files must not be interpreted as
 homozygous reference.
@@ -635,6 +691,8 @@ Do not copy the full 22.1 TiB delivery.
 | 2026-11-18 | Candidate GAP delivery | `ilm_20000/version-2/` | BlobFuse linked/read-only | Version root found | Immediate contents pending |
 | 2026-11-18 | Candidate GAP shards | `ilm_20000/version-2/shard-001` through `shard-323` | BlobFuse linked/read-only | Exact gap-free 323-directory name sequence | Representative contents sampled; all-file counts, genomic coverage, manifest, and acceptance pending |
 | 2026-11-18 | Clinical workspace folders | `ClinicalOMOP/`, `ClinicalPGPMap/` | Linked into interactive session | Top-level names inventoried only | 16 OMOP CSVs and three protected mapping CSVs; authorization, schema, snapshot, provenance, and Bartek access pending |
+| 2026-11-19 | Phase 1 cancer genomes | `joint_genotyping/ilm_3400/version-2/chrN/` | Azure source linked through read-only BlobFuse; Batch `path` localization accepted for chr20 | Located; single-pair technical gate passed; full-delivery acceptance pending | `chr20/` directly contains ML-filtered and raw VCF/index pairs; receipt sizes/count match historical evidence; `chr01/` also linked |
+| 2026-11-19 | Cancer probe analysis result | Platform analysis result mount | Interactive result mount | Completed result required a new VSCode session | Existing fixed-name `results` mount caused a collision; pipeline `outdir` does not control the interactive mount name |
 
 ## Bartek Handoff Summary
 
@@ -729,3 +787,18 @@ discrepancy rather than silently changing the expected contract.
 - **2026-11-18:** Generated a 323-row shard-region manifest in writable session
   storage. Recorded contig shard counts and confirmed 300 autosomal plus 23
   chrM/chrX/chrY shards.
+- **2026-11-19:** Located the separate Phase 1 cancer-cohort Azure delivery and
+  confirmed account-short linking into the interactive session. Immediate-name
+  inspection of `chr20/` established a single chromosome folder containing both
+  indexed VCF forms; no genomic contents or sample identifiers were read.
+- **2026-11-19:** Corrected the current Azure layout from historical
+  `chr20/chr20` nesting to `version-2/chr20/<files>` and recorded the distinct
+  interactive-linked versus Batch-localized access modes.
+- **2026-11-19:** Accepted the chromosome 20 technical Batch gate. The VCF and
+  index were regular XFS files under the task mount; sizes and the 3,296,226
+  variant count matched historical evidence exactly. Opaque task identifiers
+  and OCR-transcribed hashes were not retained in Git.
+- **2026-11-19:** Reconfirmed the Azure interactive result-mount collision: an
+  existing fixed-name `results` mount prevented attaching the completed cancer
+  probe result. A new VSCode session was required. This is platform mount
+  behavior, not a `publishDir` or pipeline `outdir` failure.
