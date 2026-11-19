@@ -148,6 +148,22 @@ This accepts the single-pair localization and transform plumbing. It does not
 establish all-22-chromosome completeness, reference/provenance acceptance,
 target completeness, or scientific validity.
 
+A subsequent three-chromosome run accepted Nextflow fan-out and single-node
+parallel packing:
+
+- Chromosomes 1, 20, and 22 ran as three independent Azure Batch tasks.
+- All three transforms overlapped for approximately 105.6 seconds.
+- All receipts reported the same Azure pool and node, with different task and
+  container identifiers.
+- Azure therefore packed three 1-CPU/4-GB tasks onto one 4-vCPU/16-GB
+  `Standard_D4s_v3` worker.
+- All inputs were regular XFS files under the Batch task mount, and expected
+  contig checks passed.
+
+This proves concurrent fan-out but not multi-node scale-out. The next controlled
+test must request the full worker slot allocation per task so concurrent tasks
+cannot share one node.
+
 ## GAP 20K Genome Delivery
 
 Location:

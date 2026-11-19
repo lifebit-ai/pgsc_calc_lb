@@ -426,7 +426,7 @@ restore local GATK/GenomicsDB joint calling.
 
 | Field | Expected contract | TRE observation |
 | --- | --- | --- |
-| Status | Separate chromosome-partitioned delivery, outside the migrated support package | Located; chromosome 20 localization/streaming gate accepted; full-delivery acceptance pending |
+| Status | Separate chromosome-partitioned delivery, outside the migrated support package | Located; chromosome 20 localization and three-chromosome fan-out accepted; multi-node/full-delivery acceptance pending |
 | Files | 22 autosomal `dragen.ml-filtered.vcf.gz` shards plus `.tbi` | Chromosome 20 ML-filtered and raw VCF/index pairs found by immediate-name listing; all 22 not yet enumerated |
 | Directory forms | One folder per chromosome, `chr01`-`chr22` or `chr1`-`chr22` | Current Azure observation confirms single-level `version-2/chr20/<files>`; no duplicated `chr20/chr20` |
 | Build | GRCh38 | Expected from historical contract; current immutable reference identity not revalidated |
@@ -691,7 +691,7 @@ Do not copy the full 22.1 TiB delivery.
 | 2026-11-18 | Candidate GAP delivery | `ilm_20000/version-2/` | BlobFuse linked/read-only | Version root found | Immediate contents pending |
 | 2026-11-18 | Candidate GAP shards | `ilm_20000/version-2/shard-001` through `shard-323` | BlobFuse linked/read-only | Exact gap-free 323-directory name sequence | Representative contents sampled; all-file counts, genomic coverage, manifest, and acceptance pending |
 | 2026-11-18 | Clinical workspace folders | `ClinicalOMOP/`, `ClinicalPGPMap/` | Linked into interactive session | Top-level names inventoried only | 16 OMOP CSVs and three protected mapping CSVs; authorization, schema, snapshot, provenance, and Bartek access pending |
-| 2026-11-19 | Phase 1 cancer genomes | `joint_genotyping/ilm_3400/version-2/chrN/` | Azure source linked through read-only BlobFuse; Batch `path` localization accepted for chr20 | Located; single-pair technical gate passed; full-delivery acceptance pending | `chr20/` directly contains ML-filtered and raw VCF/index pairs; receipt sizes/count match historical evidence; `chr01/` also linked |
+| 2026-11-19 | Phase 1 cancer genomes | `joint_genotyping/ilm_3400/version-2/chrN/` | Azure source linked through read-only BlobFuse; Batch localization/fan-out accepted for chr01, chr20, chr22 | Located; single-pair and concurrent fan-out gates passed; multi-node/full-delivery acceptance pending | Three transforms overlapped on one Azure node; all inputs were regular XFS files and expected contigs passed |
 | 2026-11-19 | Cancer probe analysis result | Platform analysis result mount | Interactive result mount | Completed result required a new VSCode session | Existing fixed-name `results` mount caused a collision; pipeline `outdir` does not control the interactive mount name |
 
 ## Bartek Handoff Summary
@@ -798,6 +798,10 @@ discrepancy rather than silently changing the expected contract.
   index were regular XFS files under the task mount; sizes and the 3,296,226
   variant count matched historical evidence exactly. Opaque task identifiers
   and OCR-transcribed hashes were not retained in Git.
+- **2026-11-19:** Accepted three-chromosome fan-out for chr1, chr20, and chr22.
+  The tasks overlapped for approximately 105.6 seconds and all reported one
+  common Azure node, proving concurrent single-node packing. Distinct container
+  and task identifiers were observed but not retained.
 - **2026-11-19:** Reconfirmed the Azure interactive result-mount collision: an
   existing fixed-name `results` mount prevented attaching the completed cancer
   probe result. A new VSCode session was required. This is platform mount
