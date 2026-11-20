@@ -92,8 +92,10 @@ publication and selector visibility are accepted.
 John subsequently confirmed that the command preview contained `-params-file`
 and did not duplicate the YAML values as individual `--parameter` arguments.
 Params-file command generation is accepted. A fresh non-resumed launch with the
-zero-second hold was approved; successful managed submission and completion
-remain the final params-file acceptance checks.
+zero-second hold was approved. Lifebit accepted the saved YAML and the managed
+analysis entered Running state as `johnTest08_20_11_2026`; no opaque job ID is
+retained. Submission is accepted. Successful completion and receipt
+reconciliation remain the final params-file acceptance checks.
 
 ## Lifebit Platform Config
 
