@@ -87,8 +87,13 @@ Deployment observation: opening the session folder in **Analyses Results** befor
 clicking Save on the running session page showed an empty folder. After that Save
 action, the params file synchronized and appeared correctly in the pipeline's
 Params file control. The session URL and ID are intentionally omitted. File
-publication and selector visibility are accepted; command preview and submission
-remain pending.
+publication and selector visibility are accepted.
+
+John subsequently confirmed that the command preview contained `-params-file`
+and did not duplicate the YAML values as individual `--parameter` arguments.
+Params-file command generation is accepted. A fresh non-resumed launch with the
+zero-second hold was approved; successful managed submission and completion
+remain the final params-file acceptance checks.
 
 ## Lifebit Platform Config
 
