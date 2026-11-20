@@ -59,6 +59,29 @@ selected revision is correct, and no duplicate individual `--parameter` values
 were added. Keep one immutable copy of the submitted params file with the
 analysis evidence, subject to TRE policy.
 
+### Moving a params file from VSCode to File Explorer
+
+The documented session-to-platform route is:
+
+1. Create the YAML file beneath the VSCode session's `session_data` directory.
+2. Save the session from its Monitor page or the session-data side panel. Only
+   files under `session_data` are saved as session results.
+3. Open **File Explorer -> Workspace Project Data -> the session's project ->
+   Analyses Results -> the VSCode session folder** and locate the saved file.
+4. First test whether the Params file selector can use that Analysis Results
+   file directly. For a stable reusable location, select the file, choose
+   **Virtual copy**, and place it in the project's **Data** folder.
+
+File Explorer also documents **Data -> Import data -> From Analysis** for moving
+analysis outputs into project data, but a virtual copy of the individual file is
+more targeted when only the params file is needed. Virtual copies do not create
+another physical copy of the underlying object.
+
+The CloudOS dataset CLI documents listing, linking, moving, and copying objects
+that are already registered in File Explorer. It does not document copying an
+arbitrary local `session_data` path directly into project Data, so it is not the
+initial transfer mechanism for this file.
+
 ## Lifebit Platform Config
 
 The **Custom -> Import** control does not accept a plain Nextflow JSON object.
@@ -111,3 +134,6 @@ handling and scripted-submission procedure for this TRE.
 - [Add multiple schemas to your pipeline repository](https://lifebit.atlassian.net/wiki/spaces/CD/pages/1231716381/Add+multiple+schemas+to+your+pipeline+repository)
 - [Submit and Monitor Jobs through the CLI](https://lifebit.atlassian.net/wiki/spaces/CD/pages/1798701103/Submit+and+Monitor+Jobs+through+the+CLI)
 - [View pipeline metrics/results](https://lifebit.atlassian.net/wiki/spaces/CD/pages/813040996/View+pipeline+metrics+results+and+mount+results+into+an+interactive+session)
+- [Save a VSCode session and capture a snapshot](https://lifebit.atlassian.net/wiki/spaces/CD/pages/1713800006/Save+a+VSCode+session+and+capture+a+snapshot)
+- [Find the results of a VSCode session](https://lifebit.atlassian.net/wiki/spaces/CD/pages/1713800150/Find+the+results+of+a+VSCode+session)
+- [Use the File explorer](https://lifebit.atlassian.net/wiki/spaces/CD/pages/1282768899/Use+the+File+explorer)
