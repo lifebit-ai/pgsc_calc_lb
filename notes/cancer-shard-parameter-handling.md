@@ -64,7 +64,8 @@ analysis evidence, subject to TRE policy.
 The documented session-to-platform route is:
 
 1. Create the YAML file beneath the VSCode session's `session_data` directory.
-2. Save the session from its Monitor page or the session-data side panel. Only
+2. Open the running interactive-analysis session page and click **Save**. This
+   was the action that synchronized the file in the tested deployment. Only
    files under `session_data` are saved as session results.
 3. Open **File Explorer -> Workspace Project Data -> the session's project ->
    Analyses Results -> the VSCode session folder** and locate the saved file.
@@ -81,6 +82,13 @@ The CloudOS dataset CLI documents listing, linking, moving, and copying objects
 that are already registered in File Explorer. It does not document copying an
 arbitrary local `session_data` path directly into project Data, so it is not the
 initial transfer mechanism for this file.
+
+Deployment observation: opening the session folder in **Analyses Results** before
+clicking Save on the running session page showed an empty folder. After that Save
+action, the params file synchronized and appeared correctly in the pipeline's
+Params file control. The session URL and ID are intentionally omitted. File
+publication and selector visibility are accepted; command preview and submission
+remain pending.
 
 ## Lifebit Platform Config
 
