@@ -2,15 +2,6 @@
 
 nextflow.enable.dsl = 2
 
-params.input_vcf_chr01 = null
-params.input_index_chr01 = null
-params.input_vcf_chr20 = null
-params.input_index_chr20 = null
-params.input_vcf_chr22 = null
-params.input_index_chr22 = null
-params.hold_seconds = 1200
-params.outdir = params.outdir ?: 'results'
-
 process CANCER_SHARD_PROBE {
     tag "${shard_label}"
 

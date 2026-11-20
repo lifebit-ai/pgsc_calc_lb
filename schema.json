@@ -1,0 +1,8 @@
+{
+  "schemas": [
+    {
+      "name": "Cancer chromosome scale-out probe",
+      "filePath": "nextflow_schema.json"
+    }
+  ]
+}

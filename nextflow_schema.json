@@ -1,66 +1,88 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://raw.githubusercontent.com/lifebit-ai/pgsc_calc_lb/john_test_07/nextflow_schema.json",
+  "$id": "https://raw.githubusercontent.com/lifebit-ai/pgsc_calc_lb/john_test_08/nextflow_schema.json",
   "title": "Cancer chromosome scale-out probe",
   "description": "Reserve one full worker per cancer chromosome task and observe Azure Batch scale-out.",
   "type": "object",
-  "properties": {
-    "input_vcf_chr01": {
-      "type": "string",
-      "format": "file-path",
-      "exists": true,
-      "description": "Chromosome 1 ML-filtered cancer cohort VCF."
+  "definitions": {
+    "input_options": {
+      "title": "Required chromosome inputs",
+      "type": "object",
+      "description": "Select the three ML-filtered VCF and Tabix index pairs.",
+      "properties": {
+        "input_vcf_chr01": {
+          "type": "string",
+          "format": "file-path",
+          "exists": true,
+          "description": "Chromosome 1 ML-filtered cancer cohort VCF."
+        },
+        "input_index_chr01": {
+          "type": "string",
+          "format": "file-path",
+          "exists": true,
+          "description": "Tabix index paired with input_vcf_chr01."
+        },
+        "input_vcf_chr20": {
+          "type": "string",
+          "format": "file-path",
+          "exists": true,
+          "description": "Chromosome 20 ML-filtered cancer cohort VCF."
+        },
+        "input_index_chr20": {
+          "type": "string",
+          "format": "file-path",
+          "exists": true,
+          "description": "Tabix index paired with input_vcf_chr20."
+        },
+        "input_vcf_chr22": {
+          "type": "string",
+          "format": "file-path",
+          "exists": true,
+          "description": "Chromosome 22 ML-filtered cancer cohort VCF."
+        },
+        "input_index_chr22": {
+          "type": "string",
+          "format": "file-path",
+          "exists": true,
+          "description": "Tabix index paired with input_vcf_chr22."
+        }
+      },
+      "required": [
+        "input_vcf_chr01",
+        "input_index_chr01",
+        "input_vcf_chr20",
+        "input_index_chr20",
+        "input_vcf_chr22",
+        "input_index_chr22"
+      ]
     },
-    "input_index_chr01": {
-      "type": "string",
-      "format": "file-path",
-      "exists": true,
-      "description": "Tabix index paired with input_vcf_chr01."
-    },
-    "input_vcf_chr20": {
-      "type": "string",
-      "format": "file-path",
-      "exists": true,
-      "description": "Chromosome 20 ML-filtered cancer cohort VCF."
-    },
-    "input_index_chr20": {
-      "type": "string",
-      "format": "file-path",
-      "exists": true,
-      "description": "Tabix index paired with input_vcf_chr20."
-    },
-    "input_vcf_chr22": {
-      "type": "string",
-      "format": "file-path",
-      "exists": true,
-      "description": "Chromosome 22 ML-filtered cancer cohort VCF."
-    },
-    "input_index_chr22": {
-      "type": "string",
-      "format": "file-path",
-      "exists": true,
-      "description": "Tabix index paired with input_vcf_chr22."
-    },
-    "hold_seconds": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 1800,
-      "default": 1200,
-      "description": "Controlled hold used to keep full-slot tasks pending long enough to observe worker scale-out."
-    },
-    "outdir": {
-      "type": "string",
-      "format": "directory-path",
-      "default": "results",
-      "description": "Output directory for the three scale-out receipts."
+    "execution_options": {
+      "title": "Execution options",
+      "type": "object",
+      "description": "Control the scale-out observation and receipt destination.",
+      "properties": {
+        "hold_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1800,
+          "default": 1200,
+          "description": "Controlled hold used to keep full-slot tasks pending long enough to observe worker scale-out."
+        },
+        "outdir": {
+          "type": "string",
+          "format": "directory-path",
+          "default": "results",
+          "description": "Output directory for the three scale-out receipts."
+        }
+      }
     }
   },
-  "required": [
-    "input_vcf_chr01",
-    "input_index_chr01",
-    "input_vcf_chr20",
-    "input_index_chr20",
-    "input_vcf_chr22",
-    "input_index_chr22"
+  "allOf": [
+    {
+      "$ref": "#/definitions/input_options"
+    },
+    {
+      "$ref": "#/definitions/execution_options"
+    }
   ]
 }
