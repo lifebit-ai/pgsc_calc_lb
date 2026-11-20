@@ -32,6 +32,19 @@ Acceptance checks:
 5. No concrete account, container, or blob path is prefilled from Git.
 6. The command preview contains each selected value exactly once.
 
+Remote observation on `john_test_08` revision `2587b11`:
+
+- Lifebit discovered and rendered the schema without a duplicate or ambiguous
+  schema entry.
+- Parameter search and required-only filtering were available.
+- Both parameter groups and their descriptions rendered correctly.
+- All six VCF/index fields were blank and marked required, as intended.
+- `hold_seconds=1200` and `outdir=results` were prefilled as optional values.
+- The Additional parameters controls remained available.
+
+Schema discovery and rendering are accepted. Filled-field command generation is
+still pending, and params-file handling is a separate acceptance gate.
+
 ## Nextflow Params File
 
 For repeated launches with many parameters, prefer a TRE-held YAML params file.
