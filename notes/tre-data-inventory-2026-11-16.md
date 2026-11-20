@@ -426,7 +426,7 @@ restore local GATK/GenomicsDB joint calling.
 
 | Field | Expected contract | TRE observation |
 | --- | --- | --- |
-| Status | Separate chromosome-partitioned delivery, outside the migrated support package | Located; chromosome 20 localization and three-chromosome fan-out accepted; multi-node/full-delivery acceptance pending |
+| Status | Separate chromosome-partitioned delivery, outside the migrated support package | Located; chromosome 20 localization, three-chromosome fan-out, and three-node technical gates accepted; full-delivery acceptance pending |
 | Files | 22 autosomal `dragen.ml-filtered.vcf.gz` shards plus `.tbi` | Chromosome 20 ML-filtered and raw VCF/index pairs found by immediate-name listing; all 22 not yet enumerated |
 | Directory forms | One folder per chromosome, `chr01`-`chr22` or `chr1`-`chr22` | Current Azure observation confirms single-level `version-2/chr20/<files>`; no duplicated `chr20/chr20` |
 | Build | GRCh38 | Expected from historical contract; current immutable reference identity not revalidated |
@@ -691,8 +691,10 @@ Do not copy the full 22.1 TiB delivery.
 | 2026-11-18 | Candidate GAP delivery | `ilm_20000/version-2/` | BlobFuse linked/read-only | Version root found | Immediate contents pending |
 | 2026-11-18 | Candidate GAP shards | `ilm_20000/version-2/shard-001` through `shard-323` | BlobFuse linked/read-only | Exact gap-free 323-directory name sequence | Representative contents sampled; all-file counts, genomic coverage, manifest, and acceptance pending |
 | 2026-11-18 | Clinical workspace folders | `ClinicalOMOP/`, `ClinicalPGPMap/` | Linked into interactive session | Top-level names inventoried only | 16 OMOP CSVs and three protected mapping CSVs; authorization, schema, snapshot, provenance, and Bartek access pending |
-| 2026-11-19 | Phase 1 cancer genomes | `joint_genotyping/ilm_3400/version-2/chrN/` | Azure source linked through read-only BlobFuse; Batch localization/fan-out accepted for chr01, chr20, chr22 | Located; single-pair and concurrent fan-out gates passed; multi-node/full-delivery acceptance pending | Three transforms overlapped on one Azure node; all inputs were regular XFS files and expected contigs passed |
+| 2026-11-19 | Phase 1 cancer genomes | `joint_genotyping/ilm_3400/version-2/chrN/` | Azure source linked through read-only BlobFuse; Batch localization/fan-out accepted for chr01, chr20, chr22 | Located; single-pair, fan-out, and three-node technical gates passed; full-delivery acceptance pending | Natural fan-out packed three transforms onto one worker; forced placement subsequently ran them concurrently on three workers; all inputs were regular XFS files and expected contigs passed |
+| 2026-11-20 | Cancer forced-placement gate | Same three selected chromosome pairs | Azure Batch localization and execution | Three-node technical gate accepted; full-delivery and scientific acceptance pending | Three four-CPU tasks overlapped for approximately 17 minutes on three distinct on-demand `Standard_D4s_v3` workers; exact sizes and counts reconciled to the accepted fan-out run |
 | 2026-11-19 | Cancer probe analysis result | Platform analysis result mount | Interactive result mount | Completed result required a new VSCode session | Existing fixed-name `results` mount caused a collision; pipeline `outdir` does not control the interactive mount name |
+| 2026-11-20 | Cancer probe analysis logs | Platform analysis log mount | Interactive log mount and File Explorer | Log mount failed; monitoring evidence remained available | Mounting logs into the results session returned `Internal Server Error`; hashed File Explorer path was difficult to retrieve and was not retained |
 
 ## Bartek Handoff Summary
 
@@ -806,3 +808,23 @@ discrepancy rather than silently changing the expected contract.
   existing fixed-name `results` mount prevented attaching the completed cancer
   probe result. A new VSCode session was required. This is platform mount
   behavior, not a `publishDir` or pipeline `outdir` failure.
+- **2026-11-20:** Accepted the forced three-node technical gate at revision
+  `5106c7c` under Nextflow `22.11.1-edge`. Three concurrent four-CPU tasks ran
+  in one Azure Batch pool on three distinct on-demand `Standard_D4s_v3`
+  workers. Their receipts overlapped for approximately 17 minutes, and the
+  process table and cost breakdown independently confirmed full-slot allocation
+  and three distinct worker VM instances.
+- **2026-11-20:** Reconciled chromosome 1, 20, and 22 VCF/index sizes and variant
+  counts exactly to the accepted fan-out run. All inputs were regular XFS files
+  beneath the generic Batch task mount, expected-contig checks passed, and exact
+  hashes and opaque identifiers remained outside Git.
+- **2026-11-20:** Recorded that worker-start timing is consistent with dynamic
+  provisioning but cannot distinguish it from delays on existing nodes, and
+  explicit pool resize/autoscale events were unavailable. The accepted claim is
+  three-node concurrent placement, not the exact autoscale mechanism. Full
+  22-autosome and scientific acceptance remain pending.
+- **2026-11-20:** Recorded a platform log-access limitation: mounting analysis
+  logs into the VSCode results session returned `Internal Server Error`, and the
+  hashed File Explorer path could not be conveniently copied. This did not
+  block the placement decision because receipts, process metrics, costs,
+  revision, and runtime version were available.
