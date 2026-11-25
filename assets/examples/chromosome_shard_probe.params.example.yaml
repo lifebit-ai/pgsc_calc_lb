@@ -1,0 +1,10 @@
+# Copy this file into approved TRE storage, replace every placeholder, and
+# select it through Lifebit's Params file option. Do not commit real data paths.
+input_vcf_chr01: "az://<account>/<container>/<blob-key>/chr01/<vcf-file>.vcf.gz"
+input_index_chr01: "az://<account>/<container>/<blob-key>/chr01/<vcf-file>.vcf.gz.tbi"
+input_vcf_chr20: "az://<account>/<container>/<blob-key>/chr20/<vcf-file>.vcf.gz"
+input_index_chr20: "az://<account>/<container>/<blob-key>/chr20/<vcf-file>.vcf.gz.tbi"
+input_vcf_chr22: "az://<account>/<container>/<blob-key>/chr22/<vcf-file>.vcf.gz"
+input_index_chr22: "az://<account>/<container>/<blob-key>/chr22/<vcf-file>.vcf.gz.tbi"
+hold_seconds: 1200
+outdir: "chromosome-shard-scaleout-<unique-run-name>"
